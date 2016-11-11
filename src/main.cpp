@@ -2012,11 +2012,163 @@ public:
                 {
                     //DumpAttribute(type, subtype, attributes, (vertex_count == 10) ? 20 : 6);
 
+                    ushort attribute0 = attributes[0];
+                    ushort attribute1 = attributes[1];
+
                     attributes += 3;
+
+                    ushort permieter0 = attributes[0];
+                    float middleHeight = attribute1 * 0.004f;
+                    float v1026 = middleHeight * (0.333f);
+                    float v1052 = 1.0f / middleHeight;
 
                     if (vertex_count == 10)
                     {
+                        int attrib0 = attributes[0];
+
+                        int v1048    = attributes[1] | (attributes[2] << 16);
+                        vertex_count = attributes[3] | (attributes[4] << 16);
+                        int v1040    = attributes[5] | (attributes[6] << 16);
+
                         attributes += 7;
+
+                        if (vertex_count != 0.0f)
+                        {
+                            vglBindTexture(page->GetTexture(current_texture));
+
+                            for (ushort i = 1; i < page->GetPerimeterCount(); ++i)
+                            {
+                                if ((1 << i) & v1048)
+                                {
+                                    Vector3 currentVertex = page->GetCodedVertex(page->GetPerimeterVertexIndex(i));
+                                    Vector3 lastVertex    = page->GetCodedVertex(page->GetPerimeterVertexIndex(i - 1));
+
+                                    float endDist = fmax(currentVertex.Dist(lastVertex) * v1052, 1.0f);
+
+                                    vglBegin(DRAWMODE_TRIANGLESTRIP, 4);
+
+                                    {
+                                        vglTexCoord2f(0.0f, 1.0f);
+                                        vglVertex3f(currentVertex + Vector3 {
+                                            0.0f, middleHeight, 0.0f 
+                                        });
+
+                                        vglTexCoord2f(0.0f, 0.0f);
+                                        vglVertex3f(currentVertex);
+
+                                        vglTexCoord2f(endDist, 1.0f);
+                                        vglVertex3f(lastVertex + Vector3 {
+                                            0.0f, middleHeight, 0.0f
+                                        });
+
+                                        vglTexCoord2f(endDist, 0.0f);
+                                        vglVertex3f(lastVertex);
+                                    }
+
+                                    vglEnd();
+                                }
+                            }
+
+                            if (!(attribute0 & 0x4) && (attribute0 & 0x40))
+                            {
+                                for (ushort i = 1; i < page->GetPerimeterCount(); ++i)
+                                {
+                                    if ((1 << i) & v1048)
+                                    {
+                                        Vector3 currentVertex = page->GetCodedVertex(page->GetPerimeterVertexIndex(i));
+                                        Vector3 lastVertex    = page->GetCodedVertex(page->GetPerimeterVertexIndex(i - 1));
+
+                                        float endDist = fmax(currentVertex.Dist(lastVertex) * v1052, 1.0f);
+
+                                        vglBegin(DRAWMODE_TRIANGLESTRIP, 4);
+
+                                        {
+                                            vglTexCoord2f(0.0f, 0.0f);
+                                            vglVertex3f(currentVertex);
+
+                                            vglTexCoord2f(0.0f, 1.0f);
+                                            vglVertex3f(currentVertex + Vector3 {
+                                                0.0f, middleHeight, 0.0f
+                                            });
+
+                                            vglTexCoord2f(endDist, 0.0f);
+                                            vglVertex3f(lastVertex);
+
+                                            vglTexCoord2f(endDist, 1.0f);
+                                            vglVertex3f(lastVertex + Vector3 {
+                                                0.0f, middleHeight, 0.0f
+                                            });
+                                        }
+
+                                        vglEnd();
+                                    }
+                                }
+                            }
+
+                            if (attribute0 & 0x8)
+                            {
+                                vglBindTexture(page->GetTexture(current_texture + 2));
+
+                                float topY = page->GetCodedVertex(page->GetPerimeterVertexIndex(0)).y;
+
+                                for (ushort i = 0; i < page->GetPerimeterCount(); ++i)
+                                {
+                                    topY = fmax(topY, page->GetCodedVertex(page->GetPerimeterVertexIndex(1)).y);
+                                }
+
+                                Vector3 firstVertex = page->GetCodedVertex(page->GetPerimeterVertexIndex(attrib0));
+
+                                float deltaS = floor(firstVertex.x * 0.125f);
+                                float deltaT = floor(firstVertex.z * 0.125f);
+
+                                vglBegin(DRAWMODE_TRIANGLEFAN, page->GetPerimeterCount());
+
+                                for (ushort i = 0; i < page->GetPerimeterCount(); ++i)
+                                {
+                                    Vector3 vertex = page->GetCodedVertex(page->GetPerimeterVertexIndex(
+                                        (attrib0 - i) > 0
+                                        ? (attrib0 - 1)
+                                        : (page->GetPerimeterCount() - 1)
+                                    ));
+
+                                    vglTexCoord2f(
+                                        vertex.x * 0.125f - deltaS,
+                                        vertex.y * 0.125f - deltaT
+                                    );
+
+                                    vglVertex3f(
+                                        vertex.x,
+                                        topY + middleHeight,
+                                        vertex.z
+                                    );
+                                }
+
+                                vglEnd();
+                            }
+
+                            if (attribute0 & 0x4)
+                            {
+                                vglBindTexture(page->GetTexture(current_texture + 5));
+
+                                float topY = page->GetCodedVertex(page->GetPerimeterVertexIndex(0)).y;
+
+                                for (ushort i = 0; i < page->GetPerimeterCount(); ++i)
+                                {
+                                    topY = fmax(topY, page->GetCodedVertex(page->GetPerimeterVertexIndex(1)).y);
+                                }
+
+                                Vector3 firstVertex = page->GetCodedVertex(page->GetPerimeterVertexIndex(attrib0));
+
+                                float deltaS = floor(firstVertex.x * 0.125f);
+                                float deltaT = floor(firstVertex.z * 0.125f);
+
+                                vglBegin(DRAWMODE_TRIANGLEFAN, page->GetPerimeterCount());
+
+                                
+
+                                vglEnd();                                                         
+                            }
+                        }
                     }
                 } break;
 
@@ -2046,11 +2198,21 @@ public:
                         {
                             unsigned int color = texture->Color;
 
-                            vglCurrentColor = sdlPage16::GetShadedColor(
-                                sdlCommon::sm_LightTable[current_shaded_color],
-                                color ? color : 0xFFFFFFFF,
-                                baseColor
-                            );
+                            if (color)
+                            {
+                                vglCurrentColor = sdlPage16::GetShadedColor(
+                                    sdlCommon::sm_LightTable[current_shaded_color],
+                                    color,
+                                    baseColor
+                                );
+                            }
+                            else
+                            {
+                                vglCurrentColor = sdlPage16::GetShadedColor(
+                                    sdlCommon::sm_LightTable[current_shaded_color],
+                                    baseColor
+                                );
+                            } 
 
                             vglBindTexture(texture);
                         } else
