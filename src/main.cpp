@@ -1501,10 +1501,11 @@ public:
                         float middleHeight = attrib1 * 0.004f;
 
                         vglBindTexture(page->GetTexture(current_texture + 1));
-                        page->ArcMap(sBuffer, (ushort*) roadVertices, 6, vertex_count, 1);
 
                         if (roadVertices->PavementL != roadVertices->RoadL) // If there is a left pavement
                         {
+                            page->ArcMap(sBuffer, &roadVertices->PavementL, 6, vertex_count, 1);
+
                             { // Draw Left Pavement
                                 vglBegin(DRAWMODE_TRIANGLESTRIP, 2 * vertex_count);
 
@@ -1551,7 +1552,7 @@ public:
 
                         if (roadVertices->RoadR != roadVertices->PavementR) // If there is a right pavement
                         {
-                            page->ArcMap(sBuffer, &roadVertices->RoadR, 4, vertex_count, 1);
+                            page->ArcMap(sBuffer, &roadVertices->RoadR, 6, vertex_count, 1);
 
                             { // Draw Right Pavement
                                 vglBegin(DRAWMODE_TRIANGLESTRIP, 2 * vertex_count);
