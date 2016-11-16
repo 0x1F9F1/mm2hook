@@ -2022,6 +2022,8 @@ public:
                     float v1026 = middleHeight * (0.333f);
                     float v1052 = 1.0f / middleHeight;
 
+                    int perimeterCount = page->GetPerimeterCount();
+
                     if (vertex_count == 10)
                     {
                         int attrib0 = attributes[0];
@@ -2032,11 +2034,11 @@ public:
 
                         attributes += 7;
 
-                        if (vertex_count != 0.0f)
+                        if (middleHeight != 0.0f)
                         {
                             vglBindTexture(page->GetTexture(current_texture));
 
-                            for (ushort i = 1; i < page->GetPerimeterCount(); ++i)
+                            for (ushort i = 1; i < perimeterCount; ++i)
                             {
                                 if ((1 << i) & v1048)
                                 {
@@ -2071,7 +2073,7 @@ public:
 
                             if (!(attribute0 & 0x4) && (attribute0 & 0x40))
                             {
-                                for (ushort i = 1; i < page->GetPerimeterCount(); ++i)
+                                for (ushort i = 1; i < perimeterCount; ++i)
                                 {
                                     if ((1 << i) & v1048)
                                     {
@@ -2109,11 +2111,11 @@ public:
                             {
                                 vglBindTexture(page->GetTexture(current_texture + 2));
 
-                                float topY = page->GetCodedVertex(page->GetPerimeterVertexIndex(0)).y;
+                                float topY = 0.0f;
 
-                                for (ushort i = 0; i < page->GetPerimeterCount(); ++i)
+                                for (ushort i = 0; i < perimeterCount; ++i)
                                 {
-                                    topY = fmax(topY, page->GetCodedVertex(page->GetPerimeterVertexIndex(1)).y);
+                                    topY = fmax(topY, page->GetCodedVertex(page->GetPerimeterVertexIndex(i)).y);
                                 }
 
                                 Vector3 firstVertex = page->GetCodedVertex(page->GetPerimeterVertexIndex(attrib0));
@@ -2121,14 +2123,14 @@ public:
                                 float deltaS = floor(firstVertex.x * 0.125f);
                                 float deltaT = floor(firstVertex.z * 0.125f);
 
-                                vglBegin(DRAWMODE_TRIANGLEFAN, page->GetPerimeterCount());
+                                vglBegin(DRAWMODE_TRIANGLEFAN, perimeterCount);
 
-                                for (ushort i = 0; i < page->GetPerimeterCount(); ++i)
+                                for (ushort i = 0; i < perimeterCount; ++i)
                                 {
                                     Vector3 vertex = page->GetCodedVertex(page->GetPerimeterVertexIndex(
                                         (attrib0 - i) > 0
                                         ? (attrib0 - 1)
-                                        : (page->GetPerimeterCount() - 1)
+                                        : (perimeterCount - 1)
                                     ));
 
                                     vglTexCoord2f(
@@ -2150,19 +2152,19 @@ public:
                             {
                                 vglBindTexture(page->GetTexture(current_texture + 5));
 
-                                float topY = page->GetCodedVertex(page->GetPerimeterVertexIndex(0)).y;
+                                float topY = 0.0f;
 
-                                for (ushort i = 0; i < page->GetPerimeterCount(); ++i)
+                                for (ushort i = 0; i < perimeterCount; ++i)
                                 {
-                                    topY = fmax(topY, page->GetCodedVertex(page->GetPerimeterVertexIndex(1)).y);
+                                    topY = fmax(topY, page->GetCodedVertex(page->GetPerimeterVertexIndex(i)).y);
                                 }
-
+                                
                                 Vector3 firstVertex = page->GetCodedVertex(page->GetPerimeterVertexIndex(attrib0));
 
                                 float deltaS = floor(firstVertex.x * 0.125f);
                                 float deltaT = floor(firstVertex.z * 0.125f);
 
-                                vglBegin(DRAWMODE_TRIANGLEFAN, page->GetPerimeterCount());
+                                vglBegin(DRAWMODE_TRIANGLEFAN, perimeterCount);
 
                                 
 
