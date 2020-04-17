@@ -1190,11 +1190,10 @@ void vehPoliceCarAudioHandler::Install() {
 */
 
 void datCallbackExtensionHandler::Install() {
-    InstallPatch("datCallback Fix 1", { 0x00, 0x00, 0x00, 0x40 }, { 0x4C7A5B + 2, 0x4C7AC8 + 2, 0x4C7B70 + 1, 0x4C7BA6 + 1 });
-    InstallPatch("datCallback Fix 2", { 0x00, 0x00, 0x00, 0x80 }, { 0x4C7A90 + 2, 0x4C7AFB + 2, 0x4C7B7E + 1, 0x4C7BB4 + 1 });
-    InstallPatch("datCallback Fix 3", { 0x00, 0x00, 0x00, 0xC0 }, { 0x4C7AB0 + 2, 0x4C7B2B + 2, 0x4C7B90 + 1, 0x4C7BC9 + 1, 0x4C7B61 + 1 });
-    InstallPatch("datCallback Fix 4", { 0xFF, 0xFF, 0xFF, 0x3F }, { 0x4C7B5B + 2 });
-    InstallPatch("datCallback Code Cave", { 0xFF, 0xE1 }, { 0x4C7BE3 });
+    InstallPatch("datCallback Fix 1", { 0x01, 0x00, 0x00, 0x00 }, { 0x4C7A5B + 2, 0x4C7AC8 + 2, 0x4C7B70 + 1, 0x4C7BA6 + 1 });
+    InstallPatch("datCallback Fix 2", { 0x02, 0x00, 0x00, 0x00 }, { 0x4C7A90 + 2, 0x4C7AFB + 2, 0x4C7B7E + 1, 0x4C7BB4 + 1 });
+    InstallPatch("datCallback Fix 3", { 0x03, 0x00, 0x00, 0x00 }, { 0x4C7AB0 + 2, 0x4C7B2B + 2, 0x4C7B90 + 1, 0x4C7BC9 + 1, 0x4C7B61 + 1 });
+    InstallPatch("datCallback Fix 4", { 0xFC, 0xFF, 0xFF, 0xFF }, { 0x4C7B5B + 2 });
 }
 
 /*
@@ -1916,7 +1915,7 @@ public:
         offsetY += PauseMenuAdjustment;
 
         Warningf("**** PUMenuHook::AddPauseButton(%d, \"%s\", %.2f, %.2f, %.2f, %.2f, %d, %d, <callback:%08X>, %d) ****",
-            id, text, offsetX, offsetY, width, height, a7, a8, cb.ptr(), a10);
+            id, text, offsetX, offsetY, width, height, a7, a8, cb.GetCallback(), a10);
 
         UIButton *result = this->AddButton(id, text, offsetX, offsetY, width, height, a7, a8, cb, a10);
 

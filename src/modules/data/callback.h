@@ -1,5 +1,7 @@
 #pragma once
+
 #include <modules\data.h>
+#include <modules\data\base.h>
 
 namespace MM2
 {
@@ -32,106 +34,122 @@ namespace MM2
     class datCallback
     {
     protected:
-        enum Flags
+        Base* _class {nullptr};
+        uintptr_t _callback {0};
+        void* _parameter {nullptr};
+
+        enum : uintptr_t
         {
-            ParamCount0 = 0x40000000,
-            ParamCount1 = 0x80000000,
-            ParamCount2 = 0xC0000000,
-            ParamCountFlags = ParamCount0 | ParamCount1 | ParamCount2
+            datCallback_ParamCount0 = 0x1,
+            datCallback_ParamCount1 = 0x2,
+            datCallback_ParamCount2 = 0x3,
+            datCallback_ParamCountFlags = 0x3,
         };
 
-        Base* _class;
-        unsigned int _callback;
-        void* _parameter;
-
-        unsigned int _get_flags()
+        template <typename T>
+        static inline uintptr_t TaggedCallback(T value, uintptr_t flag)
         {
-            return _callback & ParamCountFlags;
-        }
+            static_assert(sizeof(T) == sizeof(uintptr_t), "Invalid Callback Type");
 
-        unsigned int _get_callback()
-        {
-            return _callback & ~ParamCountFlags;
-        }
+            uintptr_t address = 0;
+            std::memcpy(&address, &value, sizeof(uintptr_t));
 
-        unsigned int _combine_callback(void* callback, unsigned int flags)
-        {
-            return reinterpret_cast<unsigned int&>(callback) | flags;
-        }
+            if ((address & datCallback_ParamCountFlags) != 0)
+            {
+                Quitf("Misaligned callback");
+            }
 
-        template <typename ...TArgs>
-        void virtual_callback(uint callback, TArgs ...args) const {
-            (_class->*reinterpret_cast<VirtualCall<void, Base, TArgs...> &>(callback))(args...);
-        }
-
-        template <typename ...TArgs>
-        void method_callback(uint callback, TArgs ...args) const {
-            reinterpret_cast<MethodCall<void, TArgs...> &>(callback)(args...);
+            return address | flag;
         }
 
     public:
-        static ageHook::TypeProxy<datCallback> NullCallback;
+        datCallback() = default;
 
-        inline unsigned int ptr() const {
-            return _callback & ~ParamCountFlags;
+        datCallback(void (Base::*callback)(void), Base* this_param)
+            : _class(this_param)
+            , _callback(TaggedCallback(callback, datCallback_ParamCount0))
+            , _parameter(nullptr)
+        {
+            if (!this_param)
+                Quitf("Passed member callback with null 'this' parameter");
         }
 
-        AGE_API datCallback()
-            : _class(NULL)
-            , _callback(NULL)
-            , _parameter(NULL)
-        { }
-
-        AGE_API datCallback(void(*callback)())
-            : _class((Base*)callback)
-            , _callback(0x4C7BE3 | ParamCount0)
-            , _parameter(NULL)
-        { }
-        
-        AGE_API datCallback(void(__stdcall *callback)(void*), void* parameter)
-            : _class((Base*)callback)
-            , _callback(0x4C7BE3 | ParamCount1)
-            , _parameter(parameter)
-        { }
-
-        AGE_API datCallback(void(__stdcall *callback)())
-            : _class((Base*)callback)
-            , _callback(0x4C7BE3 | ParamCount0)
-            , _parameter(NULL)
-        { }
-
-        AGE_API datCallback(void(__stdcall *callback)(void*, void*), void* parameter)
-            : _class((Base*)callback)
-            , _callback(0x4C7BE3 | ParamCount2)
-            , _parameter(parameter)
-        { }
-
-        AGE_API void Call(void* parameter)
+        datCallback(void (Base::*callback)(void*), Base* this_param, void* void_param)
+            : _class(this_param)
+            , _callback(TaggedCallback(callback, datCallback_ParamCount1))
+            , _parameter(void_param)
         {
-            auto callback = _get_callback();
-            auto flags = _get_flags();
+            if (!this_param)
+                Quitf("Passed member callback with null 'this' parameter");
+        }
 
-            if (flags)
+        datCallback(void (Base::*callback)(void*, void*), Base* this_param, void* void_param)
+            : _class(this_param)
+            , _callback(TaggedCallback(callback, datCallback_ParamCount2))
+            , _parameter(void_param)
+        {
+            if (!this_param)
+                Quitf("Passed member callback with null 'this' parameter");
+        }
+
+        datCallback(void (*callback)(void))
+            : _class(nullptr)
+            , _callback(TaggedCallback(callback, datCallback_ParamCount0))
+            , _parameter(nullptr)
+        {}
+
+        datCallback(void (*callback)(void*), void* void_param)
+            : _class(nullptr)
+            , _callback(TaggedCallback(callback, datCallback_ParamCount1))
+            , _parameter(void_param)
+        {}
+
+        datCallback(void (*callback)(void*, void*), void* void_param)
+            : _class(nullptr)
+            , _callback(TaggedCallback(callback, datCallback_ParamCount2))
+            , _parameter(void_param)
+        {}
+
+        uintptr_t GetCallback()
+        {
+            return _callback & ~datCallback_ParamCountFlags;
+        }
+
+        uintptr_t GetType()
+        {
+            return _callback & datCallback_ParamCountFlags;
+        }
+
+        void Call(void* parameter)
+        {
+            uintptr_t type = GetType();
+            uintptr_t callback = GetCallback();
+
+            if (type)
             {
                 if (_class)
                 {
-                    switch (flags)
+                    switch (type)
                     {
-                        case ParamCount0: return virtual_callback(callback);
-                        case ParamCount1: return virtual_callback(callback, _parameter);
-                        case ParamCount2: return virtual_callback(callback, _parameter, parameter);
+                        case datCallback_ParamCount0: return reinterpret_cast<void (__thiscall*)(Base*)>(callback)(_class);
+                        case datCallback_ParamCount1: return reinterpret_cast<void (__thiscall*)(Base*, void*)>(callback)(_class, _parameter);
+                        case datCallback_ParamCount2: return reinterpret_cast<void (__thiscall*)(Base*, void*, void*)>(callback)(_class, _parameter, parameter);
                     }
-                } else
+                }
+                else
                 {
-                    switch (flags)
+                    switch (type)
                     {
-                        case ParamCount0: return method_callback(callback);
-                        case ParamCount1: return method_callback(callback, _parameter);
-                        case ParamCount2: return method_callback(callback, _parameter, parameter);
+                        case datCallback_ParamCount0: return reinterpret_cast<void (*)()>(callback)();
+                        case datCallback_ParamCount1: return reinterpret_cast<void (*)(void*)>(callback)(_parameter);
+                        case datCallback_ParamCount2:
+                            return reinterpret_cast<void (*)(void*, void*)>(callback)(_parameter, parameter);
                     }
                 }
             }
         }
+
+        static ageHook::TypeProxy<datCallback> NullCallback;
 
         //lua
         static void BindLua(LuaState L) {
@@ -143,5 +161,4 @@ namespace MM2
     ASSERT_SIZEOF(datCallback, 0xC);
 
     // Lua initialization
-
 }
